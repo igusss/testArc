@@ -1,0 +1,61 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: poi
+  labels:
+    app: poi
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: poi
+  template:
+    metadata:
+      labels:
+        app: poi
+    spec:
+      containers:
+      - name: poi
+        image: registrytest923a.azurecr.io/tripinsights/poi:v1
+        env:
+          - name: ASPNETCORE_ENVIRONMENT
+            value: Production
+          - name: SQL_SERVER
+            value: sqlserverxoy1011.database.windows.net
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: secrets
+          mountPath: /secrets
+          readOnly: true
+      volumes:
+      - name: secrets
+        flexVolume:
+          driver: "azure/kv"
+          secretRef:
+            name: kvcreds                                          # [OPTIONAL] not required if using Pod Identity
+          options:                                                 
+            usepodidentity: "false"                                # [OPTIONAL] if not provided, will default to "false"
+            usevmmanagedidentity: "false"                          # [OPTIONAL new in version >= v0.0.15] if not provided, will default to "false"
+            vmmanagedidentityclientid: "clientid"                  # [OPTIONAL new in version >= v0.0.15] use the client id to specify which user assigned managed identity to use, leave empty to use system assigned managed identity
+            keyvaultname: "keyvaultforaksale"                      # [REQUIRED] the name of the KeyVault
+            keyvaultobjectnames: "SQLUSER;SQLPASSWORD"             # [REQUIRED] list of KeyVault object names (semi-colon separated)
+            keyvaultobjectaliases: "SQL_USER;SQL_PASSWORD"         #secret.json"      # [OPTIONAL] list of KeyVault object aliases
+            keyvaultobjecttypes: "secret;secret"                   # [REQUIRED] list of KeyVault object types: secret, key, cert
+            keyvaultobjectversions: ""                             # [OPTIONAL] list of KeyVault object versions (semi-colon separated), will get latest if empty
+            resourcegroup: "keyvaultforaksale"                     # [REQUIRED for version < v0.0.14] the resource group of the KeyVault
+            subscriptionid: "0e13eb65-e4dd-4d7d-8192-cb1a9d1651c3" # [REQUIRED for version < v0.0.14] the subscription ID of the KeyVault
+            tenantid: "15a2fc69-b16c-45e1-871e-4b921bf79f0c"       # [REQUIRED] the tenant ID of the KeyVault
+     
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: poi
+spec:
+  selector:
+    app: poi
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 80
