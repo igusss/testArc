@@ -1,0 +1,38 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: api
+  namespace: api-dev
+  annotations:
+    kubernetes.io/ingress.class: nginx
+
+spec:
+  rules:
+  - http:
+      paths: 
+      - backend:
+          serviceName: poi
+          servicePort: 8080
+        path: /api/poi
+
+  - http:
+      paths: 
+      - backend:
+          serviceName: trips
+          servicePort: 8080
+        path: /api/trips  
+
+  - http:
+      paths: 
+      - backend:
+          serviceName: userprofile
+          servicePort: 8080
+        path: /api/user   
+
+  - http:
+      paths: 
+      - backend:
+          serviceName: user-java
+          servicePort: 8083
+        path: /api/user-java
+     
